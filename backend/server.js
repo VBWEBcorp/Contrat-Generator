@@ -3,17 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const connectDB = require('./config/database');
-const Client = require('./models/Client');
+const { PrismaClient } = require('@prisma/client');
 const auth = require('./middleware/auth');
 const inseeApi = require('./services/inseeApi');
 
+const prisma = new PrismaClient();
 const app = express();
 
 // Sécurité
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN
+  origin: process.env.CORS_ORIGIN || '*'
 }));
 app.use(express.json());
 
@@ -24,12 +24,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Connexion à la base de données
-connectDB();
-
 // Routes publiques
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok' });
 });
 
 // Routes protégées
@@ -51,8 +48,7 @@ app.get('/api/search-company', auth, async (req, res) => {
 // Routes Clients
 app.post('/api/clients', auth, async (req, res) => {
   try {
-    const client = new Client(req.body);
-    await client.save();
+    const client = await prisma.client.create({ data: req.body });
     res.status(201).json(client);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -61,7 +57,7 @@ app.post('/api/clients', auth, async (req, res) => {
 
 app.get('/api/clients', auth, async (req, res) => {
   try {
-    const clients = await Client.find({});
+    const clients = await prisma.client.findMany();
     res.json(clients);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -70,7 +66,7 @@ app.get('/api/clients', auth, async (req, res) => {
 
 app.put('/api/clients/:id', auth, async (req, res) => {
   try {
-    const client = await Client.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const client = await prisma.client.update({ where: { id: req.params.id }, data: req.body });
     if (!client) {
       return res.status(404).json({ error: 'Client not found' });
     }
@@ -82,7 +78,7 @@ app.put('/api/clients/:id', auth, async (req, res) => {
 
 app.delete('/api/clients/:id', auth, async (req, res) => {
   try {
-    const client = await Client.findByIdAndDelete(req.params.id);
+    const client = await prisma.client.delete({ where: { id: req.params.id } });
     if (!client) {
       return res.status(404).json({ error: 'Client not found' });
     }
@@ -92,7 +88,21 @@ app.delete('/api/clients/:id', auth, async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 10000;
+
+async function startServer() {
+  try {
+    // Test de la connexion Prisma
+    await prisma.$connect();
+    console.log('Connected to database successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();

@@ -1,42 +1,56 @@
 const express = require('express');
-const User = require('../models/User');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
 const auth = require('../middleware/auth');
 
-const router = express.Router();
+const prisma = new PrismaClient();
 
 // Inscription
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
-    
+
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ email });
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
     if (existingUser) {
       return res.status(400).json({ error: 'Email already exists' });
     }
 
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // Créer un nouvel utilisateur
-    const user = new User({
-      email,
-      password,
-      name
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name
+      }
     });
 
-    await user.save();
-    
     // Générer le token
-    const token = user.generateAuthToken();
-    
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.status(201).json({
       user: {
-        _id: user._id,
+        id: user.id,
         email: user.email,
-        name: user.name,
-        role: user.role
+        name: user.name
       },
       token
     });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -47,30 +61,37 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     // Trouver l'utilisateur
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Vérifier le mot de passe
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Générer le token
-    const token = user.generateAuthToken();
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.json({
       user: {
-        _id: user._id,
+        id: user.id,
         email: user.email,
-        name: user.name,
-        role: user.role
+        name: user.name
       },
       token
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -78,9 +99,13 @@ router.post('/login', async (req, res) => {
 // Obtenir le profil de l'utilisateur connecté
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, email: true, name: true }
+    });
     res.json(user);
   } catch (error) {
+    console.error('Get user error:', error);
     res.status(500).json({ error: error.message });
   }
 });

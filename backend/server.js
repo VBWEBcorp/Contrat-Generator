@@ -32,6 +32,18 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes publiques
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Contrat Generator API is running',
+    version: '1.0.0',
+    status: 'ok',
+    endpoints: {
+      auth: '/auth/*',
+      root: '/'
+    }
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -111,5 +123,11 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  await prisma.$disconnect();
+  process.exit(0);
+});
 
 startServer();

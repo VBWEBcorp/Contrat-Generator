@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-export const theme = createTheme({
+const theme = createTheme({
   palette: {
     primary: {
       main: '#264060',
@@ -19,6 +19,17 @@ export const theme = createTheme({
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontSize: '2.5rem',
+      fontWeight: 500,
+    },
+    h2: {
+      fontSize: '2rem',
+      fontWeight: 500,
+    },
+    body1: {
+      fontSize: '1rem',
+    },
   },
   components: {
     MuiButton: {
@@ -31,3 +42,5 @@ export const theme = createTheme({
     },
   },
 });
+
+export default theme;

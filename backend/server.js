@@ -13,7 +13,11 @@ const app = express();
 // Sécurité
 app.use(helmet());
 app.use(cors({
-  origin: ['https://contratgenerator.onrender.com', 'http://localhost:3000'],
+  origin: [
+    'https://contratgenerator.onrender.com',
+    'https://contrat-generator.onrender.com',
+    'http://localhost:3000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

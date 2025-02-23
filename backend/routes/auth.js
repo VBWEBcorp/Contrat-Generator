@@ -49,6 +49,7 @@ router.get('/init', async (req, res) => {
 });
 
 // Inscription
+/*
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -95,8 +96,10 @@ router.post('/register', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+*/
 
 // Connexion
+/*
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -136,19 +139,15 @@ router.post('/login', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+*/
 
 // Obtenir le profil de l'utilisateur connecté
-router.get('/me', auth, async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      select: { id: true, email: true, name: true }
-    });
-    res.json(user);
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ error: error.message });
-  }
+router.get('/me', (req, res) => {
+  res.json({
+    id: 1,
+    email: 'dev@example.com',
+    name: 'Developer'
+  });
 });
 
 module.exports = router;

@@ -18,6 +18,7 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
+  Typography
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -105,20 +106,52 @@ const Clients = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between' }}>
+    <Box sx={{ 
+      width: '100%', 
+      height: 'calc(100vh - 64px)',
+      p: { xs: 2, sm: 3 },
+      backgroundColor: 'background.default'
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3,
+        gap: 2,
+        flexWrap: { xs: 'wrap', sm: 'nowrap' }
+      }}>
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            color: 'text.primary',
+            fontSize: { xs: '1.25rem', sm: '1.5rem' }
+          }}
+        >
+          Clients
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddClient}
-          sx={{ bgcolor: 'secondary.main' }}
+          sx={{
+            minWidth: { xs: '100%', sm: 'auto' }
+          }}
         >
           Nouveau client
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          width: '100%',
+          height: 'calc(100% - 80px)',
+          borderRadius: 2,
+          overflow: 'auto',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell>Nom</TableCell>
@@ -130,7 +163,13 @@ const Clients = () => {
           </TableHead>
           <TableBody>
             {clients.map((client) => (
-              <TableRow key={client.id}>
+              <TableRow
+                key={client.id}
+                sx={{
+                  transition: 'background-color 0.2s',
+                  cursor: 'pointer'
+                }}
+              >
                 <TableCell>{client.name}</TableCell>
                 <TableCell>{client.siret}</TableCell>
                 <TableCell>{client.address}</TableCell>

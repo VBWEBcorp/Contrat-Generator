@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       if (token) {
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -50,51 +50,48 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error);
-      }
 
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('token', data.token);
-      
-      return { success: true };
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Une erreur est survenue' };
+      }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Login error:', error);
+      return { success: false, error: 'Erreur de connexion au serveur' };
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (email, password, name) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ email, password, name })
       });
 
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error);
-      }
 
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('token', data.token);
-      
-      return { success: true };
+      if (response.ok) {
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Une erreur est survenue' };
+      }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Register error:', error);
+      return { success: false, error: 'Erreur de connexion au serveur' };
     }
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
     localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
   };
 
   const value = {
@@ -102,8 +99,8 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     login,
-    register,
-    logout
+    logout,
+    register
   };
 
   return (

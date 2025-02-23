@@ -7,6 +7,41 @@ const auth = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
+// Route temporaire pour créer un admin (à supprimer en production)
+router.post('/init', async (req, res) => {
+  try {
+    const adminEmail = 'admin@contratgenerator.com';
+    const adminPassword = 'Admin123!';
+
+    // Vérifier si l'admin existe déjà
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: adminEmail }
+    });
+
+    if (existingAdmin) {
+      return res.status(400).json({ error: 'Admin user already exists' });
+    }
+
+    // Hash du mot de passe
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+    // Créer l'admin
+    const admin = await prisma.user.create({
+      data: {
+        email: adminEmail,
+        password: hashedPassword,
+        name: 'Administrator'
+      }
+    });
+
+    res.status(201).json({ message: 'Admin user created successfully' });
+  } catch (error) {
+    console.error('Init error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Inscription
 router.post('/register', async (req, res) => {
   try {
